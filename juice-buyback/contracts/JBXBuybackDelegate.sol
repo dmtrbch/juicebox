@@ -19,7 +19,6 @@ import "@paulrberg/contracts/math/PRBMath.sol";
 
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
-import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 
 import "./interfaces/external/IWETH9.sol";
 
@@ -66,6 +65,16 @@ contract JBXBuybackDelegate is IJBFundingCycleDataSource, IJBPayDelegate, IUnisw
      * @notice The unit of the max slippage (expressed in 1/10000th)
      */
     uint256 private constant SLIPPAGE_DENOMINATOR = 10000;
+
+    /**
+     * @notice Uniswap's TickMath.MAX_SQRT_RATIO - 1
+     */
+    uint160 private constant MAX_SQRT_RATIO_MINUS_ONE = 1461446703485210103287273052203988822378723970341;
+
+    /**
+     * @notice Uniswap's TickMath.MIN_SQRT_RATIO + 1
+     */
+    uint160 private constant MIN_SQRT_RATIO_PLUS_ONE = 4295128740;
 
     //*********************************************************************//
     // --------------------- public constant properties ------------------ //
@@ -264,7 +273,7 @@ contract JBXBuybackDelegate is IJBFundingCycleDataSource, IJBPayDelegate, IUnisw
             recipient: address(this),
             zeroForOne: !_projectTokenIsZero,
             amountSpecified: int256(_data.amount.value),
-            sqrtPriceLimitX96: _projectTokenIsZero ? TickMath.MAX_SQRT_RATIO - 1 : TickMath.MIN_SQRT_RATIO + 1,
+            sqrtPriceLimitX96: _projectTokenIsZero ? MAX_SQRT_RATIO_MINUS_ONE : MIN_SQRT_RATIO_PLUS_ONE,
             data: abi.encode(_minimumReceivedFromSwap)
         }) returns (int256 amount0, int256 amount1) {
             // Swap succeded, take note of the amount of projectToken received (negative as it is an exact input)
